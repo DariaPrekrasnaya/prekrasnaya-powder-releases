@@ -8,7 +8,7 @@ const out=path.join(root,'output'),name=`Prekrasnaya-Powder-${version}-Mac-${arc
 function appPath(){return path.join(out,arch==='arm64'?'mac-arm64':'mac','Prekrasnaya Powder.app');}
 async function smokeApp(bundle,smoke){
  fs.mkdirSync(smoke,{recursive:true});
- const child=spawn(path.join(bundle,'Contents/MacOS/Prekrasnaya Powder'),arch==='x64'?['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']:[],{env:{...process.env,COMPACT_SMOKE_OUTPUT:smoke},stdio:'inherit'});
+ const child=spawn(path.join(bundle,'Contents/MacOS/Prekrasnaya Powder'),[],{env:{...process.env,COMPACT_SMOKE_OUTPUT:smoke},stdio:'inherit'});
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill('SIGKILL');reject(Error('Widget smoke timed out'));},120000);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error('Widget exit '+code));});});
  const result=JSON.parse(fs.readFileSync(path.join(smoke,'desktop-smoke.json')));
  if(!result.ok)throw Error(JSON.stringify(result));return result;
@@ -20,8 +20,11 @@ async function main(){
   fs.writeFileSync('mac-build.json',JSON.stringify({appId:'com.daria.spycompact',productName:'Prekrasnaya Powder',electronVersion:'44.9.1',directories:{output:out},files:['**/*'],asarUnpack:['media/**'],npmRebuild:false,mac:{identity:'-',hardenedRuntime:false,notarize:false,minimumSystemVersion:'13.0.0',category:'public.app-category.productivity'},publish:null},null,2));
  }else if(process.argv[2]==='test'){
   run('codesign',['--verify','--deep','--strict','--verbose=2',appPath()]);
+  const binaryArch=execFileSync('lipo',['-archs',path.join(appPath(),'Contents/MacOS/Prekrasnaya Powder')],{encoding:'utf8'}).trim();
+  if(binaryArch!==(arch==='x64'?'x86_64':'arm64'))throw Error('Wrong binary architecture: '+binaryArch);
+  if(arch==='x64'&&process.arch==='arm64')run('/usr/bin/arch',['-x86_64','/usr/bin/true']);
   const smoke=path.join(root,'smoke'),result=await smokeApp(appPath(),smoke);
-  fs.writeFileSync(`mac-check-${arch}.json`,JSON.stringify({version,arch,platform:process.platform,rendering:arch==='x64'?'SwiftShader (CI has no GPU)':'native',signature:'ad-hoc (not Developer ID, not notarized)',...result},null,2));
+  fs.writeFileSync(`mac-check-${arch}.json`,JSON.stringify({version,arch,platform:process.platform,rendering:'native',testHostArch:process.arch,execution:arch===process.arch?'native':'Rosetta 2',signature:'ad-hoc (not Developer ID, not notarized)',...result},null,2));
   fs.copyFileSync(path.join(smoke,'desktop-preview.png'),`mac-preview-${arch}.png`);
   console.log(JSON.stringify(result));
  }else if(process.argv[2]==='finish'){

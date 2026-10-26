@@ -22,7 +22,8 @@ async function main(){
   fs.copyFileSync(path.join(smoke,'desktop-preview.png'),`mac-preview-${arch}.png`);
   console.log(JSON.stringify(result));
  }else if(process.argv[2]==='finish'){
-  const stage=path.join(root,'dmg-stage');fs.mkdirSync(stage);fs.cpSync(appPath(),path.join(stage,'Prekrasnaya Powder.app'),{recursive:true,dereference:false});fs.symlinkSync('/Applications',path.join(stage,'Applications'));
+  const stage=path.join(root,'dmg-stage');fs.mkdirSync(stage);fs.cpSync(appPath(),path.join(stage,'Prekrasnaya Powder.app'),{recursive:true,dereference:false,verbatimSymlinks:true});fs.symlinkSync('/Applications',path.join(stage,'Applications'));
+  run('codesign',['--verify','--deep','--strict',path.join(stage,'Prekrasnaya Powder.app')]);
   run('hdiutil',['create','-volname','Prekrasnaya Powder','-srcfolder',stage,'-ov','-format','UDZO',path.join(root,name)]);
   run('hdiutil',['verify',path.join(root,name)]);
   const sha256=crypto.createHash('sha256').update(fs.readFileSync(name)).digest('hex');

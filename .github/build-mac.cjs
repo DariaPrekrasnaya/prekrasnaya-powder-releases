@@ -19,6 +19,7 @@ async function main(){
   const result=JSON.parse(fs.readFileSync(path.join(smoke,'desktop-smoke.json')));
   if(!result.ok)throw Error(JSON.stringify(result));
   fs.writeFileSync(`mac-check-${arch}.json`,JSON.stringify({version,arch,platform:process.platform,signature:'ad-hoc (not Developer ID, not notarized)',...result},null,2));
+  fs.copyFileSync(path.join(smoke,'desktop-preview.png'),`mac-preview-${arch}.png`);
   console.log(JSON.stringify(result));
  }else if(process.argv[2]==='finish'){
   const stage=path.join(root,'dmg-stage');fs.mkdirSync(stage);fs.cpSync(appPath(),path.join(stage,'Prekrasnaya Powder.app'),{recursive:true,dereference:false});fs.symlinkSync('/Applications',path.join(stage,'Applications'));
@@ -26,7 +27,7 @@ async function main(){
   run('hdiutil',['verify',path.join(root,name)]);
   const sha256=crypto.createHash('sha256').update(fs.readFileSync(name)).digest('hex');
   fs.writeFileSync(`mac-asset-${arch}.json`,JSON.stringify({name,sha256,size:fs.statSync(name).size,version,arch},null,2));
-  run('gh',['release','upload',`v${version}`,name,`mac-asset-${arch}.json`,`mac-check-${arch}.json`]);
+  run('gh',['release','upload',`v${version}`,name,`mac-asset-${arch}.json`,`mac-check-${arch}.json`,`mac-preview-${arch}.png`]);
  }
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

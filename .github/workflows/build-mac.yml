@@ -1,0 +1,55 @@
+name: Build Mac downloads
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Draft release version (for example 0.2.2)
+        required: true
+      sha256:
+        description: SHA256 of packaged Mac input
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: mac-release-${{ inputs.version }}
+  cancel-in-progress: false
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    env:
+      VERSION: ${{ inputs.version }}
+      INPUT_SHA256: ${{ inputs.sha256 }}
+      ARCH: ${{ matrix.arch }}
+      GH_TOKEN: ${{ github.token }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Download packaged application from draft
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$INPUT_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -x true
+          gh release download "v$VERSION" --pattern mac-input.zip --dir payload
+          echo "$INPUT_SHA256  payload/mac-input.zip" | shasum -a 256 -c -
+          unzip -q payload/mac-input.zip -d payload
+          npm install --prefix tools --no-audit --no-fund electron-builder@26.15.3 @electron/asar@4.0.1
+          ./tools/node_modules/.bin/asar extract payload/app.asar application
+          node .github/build-mac.cjs prepare
+      - name: Package native Mac app with free ad-hoc signature
+        run: ./tools/node_modules/.bin/electron-builder --projectDir application --config ../mac-build.json --mac --dir --${{ matrix.arch }} --publish never
+      - name: Run packaged widget and preserve test evidence
+        run: node .github/build-mac.cjs test
+      - name: Create DMG and upload to draft
+        run: node .github/build-mac.cjs finish

@@ -8,6 +8,11 @@ on:
       sha256:
         description: SHA256 of packaged Mac input
         required: true
+      architecture:
+        description: Architectures to build
+        type: choice
+        options: [both, arm64, x64]
+        default: both
 permissions:
   contents: write
 concurrency:
@@ -18,11 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: macos-15
-            arch: arm64
-          - runner: macos-15-intel
-            arch: x64
+        include: ${{ fromJSON(inputs.architecture == 'x64' && '[{"runner":"macos-15","arch":"x64"}]' || inputs.architecture == 'arm64' && '[{"runner":"macos-15","arch":"arm64"}]' || '[{"runner":"macos-15","arch":"arm64"},{"runner":"macos-15","arch":"x64"}]') }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 25
     env:

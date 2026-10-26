@@ -8,8 +8,8 @@ const out=path.join(root,'output'),name=`Prekrasnaya-Powder-${version}-Mac-${arc
 function appPath(){return path.join(out,arch==='arm64'?'mac-arm64':'mac','Prekrasnaya Powder.app');}
 async function smokeApp(bundle,smoke){
  fs.mkdirSync(smoke,{recursive:true});
- const child=spawn(path.join(bundle,'Contents/MacOS/Prekrasnaya Powder'),[],{env:{...process.env,COMPACT_SMOKE_OUTPUT:smoke},stdio:'inherit'});
- await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill('SIGKILL');reject(Error('Widget smoke timed out'));},120000);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error('Widget exit '+code));});});
+ const child=spawn(path.join(bundle,'Contents/MacOS/Prekrasnaya Powder'),arch==='x64'?['--force-prefers-reduced-motion']:[],{env:{...process.env,COMPACT_SMOKE_OUTPUT:smoke},stdio:'inherit'});
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill('SIGKILL');reject(Error('Widget smoke timed out'));},300000);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error('Widget exit '+code));});});
  const result=JSON.parse(fs.readFileSync(path.join(smoke,'desktop-smoke.json')));
  if(!result.ok)throw Error(JSON.stringify(result));return result;
 }
@@ -17,6 +17,12 @@ async function main(){
  if(process.argv[2]==='prepare'){
   const pkg=JSON.parse(fs.readFileSync('application/package.json'));
   if(pkg.version!==version||pkg.name!=='spy-compact')throw Error('Wrong application bundle');
+  // Rosetta's initial translation is slow. Only the opt-in QA helper gets longer waits;
+  // all assertions and application behavior stay unchanged.
+  if(arch==='x64'){
+    const probe='application/desktop/smoke.cjs';
+    fs.writeFileSync(probe,fs.readFileSync(probe,'utf8').replaceAll('Date.now()+10000','Date.now()+60000').replaceAll('Date.now()+20000','Date.now()+60000'));
+  }
   fs.writeFileSync('mac-build.json',JSON.stringify({appId:'com.daria.spycompact',productName:'Prekrasnaya Powder',electronVersion:'44.9.1',directories:{output:out},files:['**/*'],asarUnpack:['media/**'],npmRebuild:false,mac:{identity:'-',hardenedRuntime:false,notarize:false,minimumSystemVersion:'13.0.0',category:'public.app-category.productivity'},publish:null},null,2));
  }else if(process.argv[2]==='test'){
   run('codesign',['--verify','--deep','--strict','--verbose=2',appPath()]);

@@ -14,11 +14,11 @@ async function main(){
  }else if(process.argv[2]==='test'){
   run('codesign',['--verify','--deep','--strict','--verbose=2',appPath()]);
   const smoke=path.join(root,'smoke');fs.mkdirSync(smoke,{recursive:true});
-  const child=spawn(path.join(appPath(),'Contents/MacOS/Prekrasnaya Powder'),[],{env:{...process.env,COMPACT_SMOKE_OUTPUT:smoke},stdio:'inherit'});
+  const child=spawn(path.join(appPath(),'Contents/MacOS/Prekrasnaya Powder'),arch==='x64'?['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']:[],{env:{...process.env,COMPACT_SMOKE_OUTPUT:smoke},stdio:'inherit'});
   await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill('SIGKILL');reject(Error('Widget smoke timed out'));},120000);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error('Widget exit '+code));});});
   const result=JSON.parse(fs.readFileSync(path.join(smoke,'desktop-smoke.json')));
   if(!result.ok)throw Error(JSON.stringify(result));
-  fs.writeFileSync(`mac-check-${arch}.json`,JSON.stringify({version,arch,platform:process.platform,signature:'ad-hoc (not Developer ID, not notarized)',...result},null,2));
+  fs.writeFileSync(`mac-check-${arch}.json`,JSON.stringify({version,arch,platform:process.platform,rendering:arch==='x64'?'SwiftShader (CI has no GPU)':'native',signature:'ad-hoc (not Developer ID, not notarized)',...result},null,2));
   fs.copyFileSync(path.join(smoke,'desktop-preview.png'),`mac-preview-${arch}.png`);
   console.log(JSON.stringify(result));
  }else if(process.argv[2]==='finish'){

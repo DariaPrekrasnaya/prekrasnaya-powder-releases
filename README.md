@@ -2,13 +2,13 @@
 
 Пудреница для рабочего стола: музыка, миссии, таймер, часы и iCloud Заметки.
 
-## Скачать версию 0.2.5
+## Скачать версию 0.2.9
 
 | Ваш компьютер | Файл для скачивания |
 | --- | --- |
-| Windows 10/11, Intel или AMD (64 бита) | [Скачать для Windows](https://github.com/DariaPrekrasnaya/prekrasnaya-powder-releases/releases/download/v0.2.5/Prekrasnaya-Powder-Setup-0.2.5.exe) |
-| Mac с чипом Apple M1/M2/M3/M4 и новее | [Скачать для Mac — чип Apple](https://github.com/DariaPrekrasnaya/prekrasnaya-powder-releases/releases/download/v0.2.5/Prekrasnaya-Powder-0.2.5-Mac-arm64.dmg) |
-| Mac с процессором Intel | [Скачать для Mac — Intel](https://github.com/DariaPrekrasnaya/prekrasnaya-powder-releases/releases/download/v0.2.5/Prekrasnaya-Powder-0.2.5-Mac-x64.dmg) |
+| Windows 10/11, Intel или AMD (64 бита) | [Скачать для Windows](https://github.com/DariaPrekrasnaya/prekrasnaya-powder-releases/releases/download/v0.2.9/Prekrasnaya-Powder-Setup-0.2.9.exe) |
+| Mac с чипом Apple M1/M2/M3/M4 и новее | [Скачать для Mac — чип Apple](https://github.com/DariaPrekrasnaya/prekrasnaya-powder-releases/releases/download/v0.2.9/Prekrasnaya-Powder-0.2.9-Mac-arm64.dmg) |
+| Mac с процессором Intel | [Скачать для Mac — Intel](https://github.com/DariaPrekrasnaya/prekrasnaya-powder-releases/releases/download/v0.2.9/Prekrasnaya-Powder-0.2.9-Mac-x64.dmg) |
 
 На Mac тип процессора указан в меню Apple → «Об этом Mac». Нужна macOS 13 или новее. Это приложение для компьютера, не для iPhone/iPad.
 
